@@ -1,0 +1,31 @@
+name: Build Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: $(date +%Y%m%d)  # Cria uma tag com a data de execução
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login in ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker image
+        run: |
+          docker buildx create --use --name mybuilder
+          docker buildx build . --platform linux/amd64,linux/arm64 --tag ${{ inputs.image-name }}:latest --push
+          docker buildx build . --platform linux/amd64,linux/arm64 --tag ${{ inputs.image-name }}:${{ env.IMAGE_TAG }} --push
