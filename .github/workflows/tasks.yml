@@ -1,0 +1,17 @@
+name: Tasks
+
+on:
+  workflow_call:
+    inputs:
+      repo-name:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Echo
+        run: |
+          echo 'Repository ${{ inputs.repo-name }}'
