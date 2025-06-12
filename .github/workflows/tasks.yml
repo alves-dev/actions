@@ -15,3 +15,15 @@ jobs:
       - name: Echo
         run: |
           echo 'Repository ${{ inputs.repo-name }}'
+  
+  readme-generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger remote workflow
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.PERSONAL_GITHUB_TOKEN }}" \
+          https://api.github.com/repos/alves-dev/infra/actions/workflows/readme-generate.yml/dispatches \
+          -d "{\"ref\":\"main\", \"inputs\": { \"repo-name\": \"${{ inputs.repo-name }}\" }}"
