@@ -12,7 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger remote workflow
+      - name: Debug token (não deixar em produção!)
+        run: |
+          echo "Token existe? ${{ secrets.PERSONAL_GITHUB_TOKEN != '' }}"
+      - name: Trigger generate readme
         run: |
           curl -X POST \
           -H "Accept: application/vnd.github+json" \
