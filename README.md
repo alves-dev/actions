@@ -32,4 +32,4 @@ template_version=v1
    <img src="https://img.shields.io/badge/licença-GPL%203-blue.svg" alt="license">
 </p>
 
-**Atualizado em:** 2025-06-13 12:13
+**Atualizado em:** 2025-06-13 12:17
