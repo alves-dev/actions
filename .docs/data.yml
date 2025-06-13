@@ -1,0 +1,20 @@
+project:
+  title: &project_title Actions
+  description: &project_description Contém a abstração das actions usadas em outros projetos
+  status: &project_status Em desenvolvimento
+  license: &project_license GPL-3
+detail:
+  version: v1
+  description: *project_description
+  website:
+  topics: &topics
+    - actions
+head:
+  version: v1
+  title: *project_title
+  description: *project_description
+  status: *project_status
+  topics: *topics
+footer:
+  version: v1
+  license: *project_license

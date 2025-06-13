@@ -1,6 +1,9 @@
-name: Tasks
+name: Readme Generate
 
 on:
+  push:
+    branches: main
+
   workflow_call:
     inputs:
       repo-name:
@@ -13,7 +16,7 @@ on:
 jobs: 
   readme-generate:
     runs-on: ubuntu-latest
-
+    if: github.actor != 'readme-generate'
     steps:
       - name: Trigger generate readme
         run: |
