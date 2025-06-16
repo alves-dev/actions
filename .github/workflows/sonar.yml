@@ -1,4 +1,4 @@
-name: Readme Generate
+name: Sonar Scan
 
 on:
   workflow_call:
@@ -14,6 +14,9 @@ jobs:
   scanner:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Sonar scanner
         run: |
           docker run --rm \
