@@ -1,0 +1,25 @@
+name: Readme Generate
+
+on:
+  workflow_call:
+    inputs:
+      repo-name:
+        required: true
+        type: string
+    secrets:
+      SONAR_TOKEN:
+        required: true
+
+jobs: 
+  scanner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sonar scanner
+        run: |
+          docker run --rm \
+          -v "$(pwd):/usr/src" \
+          sonarsource/sonar-scanner-cli \
+          -Dsonar.projectKey=${{ inputs.repo-name }} \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=https://sonar.alves-dev.com\
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
