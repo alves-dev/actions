@@ -1,4 +1,4 @@
-name: '[This] Release Latest'
+name: '[PROD] Create Latest Release'
 
 on:
   push:
