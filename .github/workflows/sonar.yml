@@ -26,3 +26,63 @@ jobs:
           -Dsonar.sources=. \
           -Dsonar.host.url=https://sonar.alves-dev.com \
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      - name: Gerar resumo do SonarQube
+        id: sonar-summary
+        run: |
+          response=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+            "https://sonar.alves-dev.com/api/measures/component?component=${{ inputs.repo-name }}&metricKeys=alert_status,bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density")
+
+          content=$(echo "$response" | jq -r '
+            .component.measures | map({ (.metric): .value }) | add | 
+            "### 🔍 Resultado da Análise SonarQube\n\n" +
+            "| Métrica              | Valor        |\n" +
+            "|----------------------|--------------|\n" +
+            "| **Qualidade**        | \(.alert_status)   |\n" +
+            "| **Bugs**             | \(.bugs)          |\n" +
+            "| **Vulnerabilidades** | \(.vulnerabilities) |\n" +
+            "| **Code Smells**      | \(.code_smells)    |\n" +
+            "| **Cobertura**        | \(.coverage)%      |\n" +
+            "| **Duplicação**       | \(.duplicated_lines_density)% |"
+          ')
+
+          echo "$content" > sonar_result.md
+          echo "markdown<<EOF" >> $GITHUB_OUTPUT
+          echo "$content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Get PR Info
+        uses: actions/github-script@v7
+        id: pr
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              head: ${context.repo.owner}:develop,
+              base: "main"
+            });
+
+            if (prs.data.length === 0) {
+              core.setFailed("❌ Nenhum PR encontrado de develop para main.");
+            } else {
+              const pr = prs.data[0];
+              console.log(`PR encontrado: #${pr.number}`);
+              core.setOutput('pr_number', pr.number);
+            }
+
+      - name: Comentar no PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = Number('${{ steps.pr.outputs.pr_number }}');
+            const body = `${{ steps.sonar-summary.outputs.markdown }}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });
