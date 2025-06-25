@@ -27,28 +27,51 @@ jobs:
           -Dsonar.host.url=https://sonar.alves-dev.com \
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
+      # - name: Gerar resumo do SonarQube
+      #   id: sonar-summary
+      #   run: |
+      #     response=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+      #       "https://sonar.alves-dev.com/api/measures/component?component=${{ inputs.repo-name }}&metricKeys=alert_status,bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density")
+
+      #     content=$(echo "$response" | jq -r '
+      #       .component.measures | map({ (.metric): .value }) | add | 
+      #       "### 🔍 Resultado da Análise SonarQube\n\n" +
+      #       "| Métrica              | Valor        |\n" +
+      #       "|----------------------|--------------|\n" +
+      #       "| **Qualidade**        | \(.alert_status)   |\n" +
+      #       "| **Bugs**             | \(.bugs)          |\n" +
+      #       "| **Vulnerabilidades** | \(.vulnerabilities) |\n" +
+      #       "| **Code Smells**      | \(.code_smells)    |\n" +
+      #       "| **Cobertura**        | \(.coverage)%      |\n" +
+      #       "| **Duplicação**       | \(.duplicated_lines_density)% |"
+      #     ')
+
+      #     echo "$content" > sonar_result.md
+      #     echo "markdown<<EOF" >> $GITHUB_OUTPUT
+      #     echo "$content" >> $GITHUB_OUTPUT
+      #     echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Gerar resumo do SonarQube
         id: sonar-summary
         run: |
-          response=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
-            "https://sonar.alves-dev.com/api/measures/component?component=${{ inputs.repo-name }}&metricKeys=alert_status,bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density")
+          PROJECT_KEY="${{ inputs.repo-name }}"
+          DASHBOARD_URL="https://sonar.alves-dev.com/dashboard?id=${PROJECT_KEY}"
+          BASE_URL="https://sonar.alves-dev.com/api/project_badges/measure?project=${PROJECT_KEY}&token=sqb_71f27eb5c7b69605f359cf5d7860011206ec080f&metric"
 
-          content=$(echo "$response" | jq -r '
-            .component.measures | map({ (.metric): .value }) | add | 
-            "### 🔍 Resultado da Análise SonarQube\n\n" +
-            "| Métrica              | Valor        |\n" +
-            "|----------------------|--------------|\n" +
-            "| **Qualidade**        | \(.alert_status)   |\n" +
-            "| **Bugs**             | \(.bugs)          |\n" +
-            "| **Vulnerabilidades** | \(.vulnerabilities) |\n" +
-            "| **Code Smells**      | \(.code_smells)    |\n" +
-            "| **Cobertura**        | \(.coverage)%      |\n" +
-            "| **Duplicação**       | \(.duplicated_lines_density)% |"
-          ')
+          cat <<EOF > sonar_result.md
+          ### 📊 Resultado da Análise SonarQube
 
-          echo "$content" > sonar_result.md
+          [![Quality Gate](${BASE_URL}=alert_status)](${DASHBOARD_URL})
+
+          | Segurança | Manutenibilidade | Confiabilidade | Cobertura |
+          |-----------|------------------|----------------|-----------|
+          | [![Vulnerabilities](${BASE_URL}=vulnerabilities)](${DASHBOARD_URL}) | [![Code Smells](${BASE_URL}=code_smells)](${DASHBOARD_URL}) | [![Bugs](${BASE_URL}=bugs)](${DASHBOARD_URL}) | [![Coverage](${BASE_URL}=coverage)](${DASHBOARD_URL}) |
+          | [![Security Rating](${BASE_URL}=security_rating)](${DASHBOARD_URL}) | [![Maintainability Rating](${BASE_URL}=sqale_rating)](${DASHBOARD_URL}) | [![Reliability Rating](${BASE_URL}=reliability_rating)](${DASHBOARD_URL}) |  |
+          | [![Security Hotspots](${BASE_URL}=security_hotspots)](${DASHBOARD_URL}) | [![Technical Debt](${BASE_URL}=sqale_index)](${DASHBOARD_URL}) |  |  |
+          EOF
+
           echo "markdown<<EOF" >> $GITHUB_OUTPUT
-          echo "$content" >> $GITHUB_OUTPUT
+          cat sonar_result.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Get PR Info
