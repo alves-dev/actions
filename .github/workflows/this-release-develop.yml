@@ -1,4 +1,4 @@
-name: '[PROD] Create Develop Release'
+name: '[DEV] Create Develop Release'
 
 on:
   push:
