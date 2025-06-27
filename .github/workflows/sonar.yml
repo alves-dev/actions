@@ -32,7 +32,7 @@ jobs:
         run: |
           PROJECT_KEY="${{ inputs.repo-name }}"
           DASHBOARD_URL="https://sonar.alves-dev.com/dashboard?id=${PROJECT_KEY}"
-          BASE_URL="https://sonar.alves-dev.com/api/project_badges/measure?project=${PROJECT_KEY}&token=sqb_71f27eb5c7b69605f359cf5d7860011206ec080f&metric"
+          BASE_URL="https://sonar.alves-dev.com/api/project_badges/measure?project=${PROJECT_KEY}"
 
           cat <<EOF > sonar_result.md
           ### 📊 Resultado da Análise SonarQube
