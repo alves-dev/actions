@@ -1,5 +1,5 @@
 <!--
-template_name=head
+template_name=head-default
 template_version=v1
 -->
 
@@ -10,10 +10,6 @@ template_version=v1
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-Em desenvolvimento-blue.svg" alt="status">
-</p>
-
-<p align="center">
 <img src="https://img.shields.io/badge/topics:-grey"> 
 <img src="https://img.shields.io/badge/actions-lightgrey">
 </p>
@@ -21,9 +17,15 @@ template_version=v1
 <hr>
 
 
+[AI Code Review](./.github/workflows/analyze-agent.yml): Faz analise do commit utilizando a StackSpot AI
 
+[Build Docker Image](./.github/workflows/build-docker.yml): Realiza o build da imagem docker e publica no GitHUb
+
+[Readme Generate](./.github/workflows/readme-generate.yml): Aciona script na minha infra para gerar o README.md automaticamente
+
+[Sonar Scan](./.github/workflows/sonar.yml): Faz o scan e comenta no PR caso haja um aberto
 <!--
-template_name=footer
+template_name=footer-default
 template_version=v1
 -->
 
@@ -32,4 +34,4 @@ template_version=v1
    <img src="https://img.shields.io/badge/licença-GPL%203-blue.svg" alt="license">
 </p>
 
-**Atualizado em:** 2025-06-27 08:18
+**Atualizado em:** 2025-06-28 18:17
