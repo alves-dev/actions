@@ -1,0 +1,28 @@
+# Arquivo principal de metadados e configuração do repositório
+# Fonte única de informações para automações, geração de documentação, build, qualidade e mais
+
+# repository.type:
+# code ➝ Código-fonte de uma aplicação, microserviço, lib, API, etc.
+# infra ➝ Infraestrutura como código, automações, GitHub Actions, scripts, Dockerfiles, IaC, etc.
+# documentation ➝ Repositório de documentação, wiki, manuais, tutoriais, etc.
+# data ➝ Armazenamento de dados versionados: arquivos JSON, YAML, CSV, datasets, object-store, etc.
+# profile ➝ Repositório de perfil pessoal, (README do GitHub Profile).
+
+
+# project.status:
+# development ➝ Desenvolvimento ativo
+# maintenance ➝ Manutenção mínima (estável, mas não tem feature nova)
+# deprecated ➝ Descontinuado (pode não funcionar)
+# archived ➝ Encerrado oficialmente, arquivo morto
+
+
+repository:                              # Obrigatório: definição básica do repo
+  version: v1
+  title: Actions                         # Nome do repositório (para humanos)
+  description:                           # Descrição curta do repositório
+    Contém a abstração das actions usadas em outros projetos
+  license: GPL-3                         # Licença do repositório [GPL-3, MIT, NOT-LICENSE]
+  type: infra                            # Indica o tipo de conteudo do repo [code, infra, documentation, data, profile]
+  topics:                                # Tópicos para categorização (GitHub Topics, README, etc.)
+    - actions
+  website:                               # URL para algum site da aplicação ou algum outro projeto que a usa
