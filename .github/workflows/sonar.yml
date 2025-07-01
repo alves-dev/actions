@@ -17,13 +17,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Detect Java project and compile
+        run: |
+          if [ -f "pom.xml" ]; then
+            echo "📦 Projeto Maven detectado, compilando..."
+            mvn clean compile -q
+          elif [ -f "build.gradle" ]; then
+            echo "📦 Projeto Gradle detectado, compilando..."
+            ./gradlew build -x test --quiet
+          else
+            echo "⚙ Sem build Java necessário."
+          fi
+
       - name: Sonar scanner
         run: |
+          JAVA_OPTS=""
+          if [ -f "pom.xml" ]; then
+            JAVA_OPTS="-Dsonar.java.binaries=target"
+          elif [ -f "build.gradle" ]; then
+            JAVA_OPTS="-Dsonar.java.binaries=build"
+          fi
+
           docker run --rm \
           -v "$(pwd):/usr/src" \
           sonarsource/sonar-scanner-cli \
           -Dsonar.projectKey=${{ inputs.repo-name }} \
           -Dsonar.sources=. \
+          $JAVA_OPTS \
           -Dsonar.host.url=https://sonar.alves-dev.com \
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
