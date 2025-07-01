@@ -24,6 +24,7 @@ jobs:
             mvn clean compile -q
           elif [ -f "build.gradle" ]; then
             echo "📦 Projeto Gradle detectado, compilando..."
+            chmod +x ./gradlew
             ./gradlew build -x test --quiet
           else
             echo "⚙ Sem build Java necessário."
