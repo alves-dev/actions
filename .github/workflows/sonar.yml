@@ -69,8 +69,8 @@ jobs:
 
           | Segurança | Manutenibilidade | Confiabilidade | Cobertura |
           |-----------|------------------|----------------|-----------|
-          | [![Vulnerabilities](${BASE_URL}vulnerabilities)](${DASHBOARD_URL}) | [![Code Smells](${BASE_URL}code_smells)](${DASHBOARD_URL}) | [![Bugs](${BASE_URL}=bugs)](${DASHBOARD_URL}) | [![Coverage](${BASE_URL}=coverage)](${DASHBOARD_URL}) |
-          | [![Security Rating](${BASE_URL}security_rating)](${DASHBOARD_URL}) | [![Maintainability Rating](${BASE_URL}sqale_rating)](${DASHBOARD_URL}) | [![Reliability Rating](${BASE_URL}=reliability_rating)](${DASHBOARD_URL}) |  |
+          | [![Vulnerabilities](${BASE_URL}vulnerabilities)](${DASHBOARD_URL}) | [![Code Smells](${BASE_URL}code_smells)](${DASHBOARD_URL}) | [![Bugs](${BASE_URL}bugs)](${DASHBOARD_URL}) | [![Coverage](${BASE_URL}coverage)](${DASHBOARD_URL}) |
+          | [![Security Rating](${BASE_URL}security_rating)](${DASHBOARD_URL}) | [![Maintainability Rating](${BASE_URL}sqale_rating)](${DASHBOARD_URL}) | [![Reliability Rating](${BASE_URL}reliability_rating)](${DASHBOARD_URL}) |  |
           | [![Security Hotspots](${BASE_URL}security_hotspots)](${DASHBOARD_URL}) | [![Technical Debt](${BASE_URL}sqale_index)](${DASHBOARD_URL}) |  |  |
           EOF
 
