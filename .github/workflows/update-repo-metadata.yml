@@ -42,14 +42,17 @@ jobs:
           fi
           
           # Lê os valores do arquivo YAML
-          DESCRIPTION=$(yq eval '.description // ""' ${{ inputs.config-file }})
-          HOMEPAGE=$(yq eval '.homepage // ""' ${{ inputs.config-file }})
+          DESCRIPTION=$(yq eval '.repository.description // ""' ${{ inputs.config-file }})
+          HOMEPAGE=$(yq eval '.repository.website // ""' ${{ inputs.config-file }})
+          TOPICS=$(yq eval '.repository.topics // [] | join(",")' ${{ inputs.config-file }})
           
           echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
           echo "homepage=$HOMEPAGE" >> $GITHUB_OUTPUT
+          echo "topics=$TOPICS" >> $GITHUB_OUTPUT
           
           echo "Descrição lida: $DESCRIPTION"
           echo "Homepage lida: $HOMEPAGE"
+          echo "Topics lidos: $TOPICS"
 
       - name: Update repository metadata
         env:
@@ -57,16 +60,17 @@ jobs:
           REPO_NAME: ${{ inputs.repo-name || github.repository }}
           DESCRIPTION: ${{ steps.read-config.outputs.description }}
           HOMEPAGE: ${{ steps.read-config.outputs.homepage }}
+          TOPICS: ${{ steps.read-config.outputs.topics }}
         run: |
           echo "Atualizando metadados do repositório: $REPO_NAME"
           
-          # Monta o payload JSON
+          # Monta o payload JSON para descrição e homepage
           PAYLOAD=$(jq -n \
             --arg desc "$DESCRIPTION" \
             --arg home "$HOMEPAGE" \
             '{description: $desc, homepage: $home}')
           
-          # Faz a requisição PATCH
+          # Faz a requisição PATCH para atualizar descrição e homepage
           RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
@@ -79,11 +83,43 @@ jobs:
           BODY=$(echo "$RESPONSE" | sed '$d')
           
           if [ "$HTTP_CODE" -eq 200 ]; then
-            echo "✅ Metadados atualizados com sucesso!"
+            echo "✅ Descrição e homepage atualizados com sucesso!"
             echo "Descrição: $DESCRIPTION"
             echo "Homepage: $HOMEPAGE"
           else
-            echo "❌ Erro ao atualizar metadados. Status code: $HTTP_CODE"
+            echo "❌ Erro ao atualizar descrição/homepage. Status code: $HTTP_CODE"
             echo "Resposta: $BODY"
             exit 1
+          fi
+          
+          # Atualiza os topics se existirem
+          if [ -n "$TOPICS" ]; then
+            echo ""
+            echo "Atualizando topics..."
+            
+            # Converte a string de topics separada por vírgula em array JSON
+            TOPICS_ARRAY=$(echo "$TOPICS" | jq -R 'split(",") | map(select(length > 0))')
+            
+            TOPICS_PAYLOAD=$(jq -n \
+              --argjson names "$TOPICS_ARRAY" \
+              '{names: $names}')
+            
+            TOPICS_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/$REPO_NAME/topics" \
+              -d "$TOPICS_PAYLOAD")
+            
+            TOPICS_HTTP_CODE=$(echo "$TOPICS_RESPONSE" | tail -n1)
+            TOPICS_BODY=$(echo "$TOPICS_RESPONSE" | sed '$d')
+            
+            if [ "$TOPICS_HTTP_CODE" -eq 200 ]; then
+              echo "✅ Topics atualizados com sucesso!"
+              echo "Topics: $TOPICS"
+            else
+              echo "⚠️  Aviso: Não foi possível atualizar os topics. Status code: $TOPICS_HTTP_CODE"
+              echo "Resposta: $TOPICS_BODY"
+              # Não falha o workflow se apenas os topics falharem
+            fi
           fi
