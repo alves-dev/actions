@@ -1,0 +1,10 @@
+schema: v1
+
+repository:
+  title: Actions
+  description: Contém a abstração das actions usadas em outros projetos
+  license: GPL-3
+  type: infra
+  topics:
+    - actions
+  website:
