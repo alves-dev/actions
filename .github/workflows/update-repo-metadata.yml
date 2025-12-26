@@ -3,10 +3,6 @@ name: Update Repository Metadata
 on:
   workflow_call:
     inputs:
-      repo-name:
-        required: false
-        type: string
-        description: 'Nome do repositório (formato: owner/repo). Se não fornecido, usa o repositório atual'
       config-file:
         required: false
         type: string
@@ -57,7 +53,7 @@ jobs:
       - name: Update repository metadata
         env:
           GITHUB_TOKEN: ${{ secrets.token || secrets.GITHUB_TOKEN }}
-          REPO_NAME: ${{ inputs.repo-name || github.repository }}
+          REPO_NAME: ${{ github.repository }}
           DESCRIPTION: ${{ steps.read-config.outputs.description }}
           HOMEPAGE: ${{ steps.read-config.outputs.homepage }}
           TOPICS: ${{ steps.read-config.outputs.topics }}
