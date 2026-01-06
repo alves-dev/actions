@@ -2,12 +2,6 @@ name: Update Repository Metadata
 
 on:
   workflow_call:
-    inputs:
-      config-file:
-        required: false
-        type: string
-        default: '.repo.yml'
-        description: 'Caminho do arquivo de configuração'
     secrets:
       token:
         required: false
@@ -17,119 +11,61 @@ jobs:
   update-metadata:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Read repository config
-        id: read-config
+      - name: Install yq
         run: |
-          if [ ! -f "${{ inputs.config-file }}" ]; then
-            echo "Arquivo ${{ inputs.config-file }} não encontrado"
-            exit 1
-          fi
-          
-          # Instala yq se não estiver disponível
-          if ! command -v yq &> /dev/null; then
-            sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-            sudo chmod +x /usr/local/bin/yq
-          fi
-          
-          # Lê os valores do arquivo YAML
-          DESCRIPTION=$(yq eval '.repository.description // ""' ${{ inputs.config-file }} | tr -d '\n')
-          HOMEPAGE=$(yq eval '.repository.website // ""' ${{ inputs.config-file }} | tr -d '\n')
-          TOPICS=$(yq eval '.repository.topics // [] | join(",")' ${{ inputs.config-file }})
-          
-          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
-          echo "homepage=$HOMEPAGE" >> $GITHUB_OUTPUT
-          echo "topics=$TOPICS" >> $GITHUB_OUTPUT
-          
-          echo "Descrição lida: $DESCRIPTION"
-          echo "Homepage lida: $HOMEPAGE"
-          echo "Topics lidos: $TOPICS"
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
 
       - name: Update repository metadata
         env:
           GITHUB_TOKEN: ${{ secrets.token || secrets.GITHUB_TOKEN }}
-          REPO_NAME: ${{ github.repository }}
-          DESCRIPTION: ${{ steps.read-config.outputs.description }}
-          HOMEPAGE: ${{ steps.read-config.outputs.homepage }}
-          TOPICS: ${{ steps.read-config.outputs.topics }}
+          CONFIG_FILE: '.repo.yml'
         run: |
-          echo "Atualizando metadados do repositório: $REPO_NAME"
-          echo "============================================"
-          echo "DESCRIPTION (raw): '$DESCRIPTION'"
-          echo "HOMEPAGE (raw): '$HOMEPAGE'"
-          echo "DESCRIPTION (hex): $(echo -n "$DESCRIPTION" | xxd -p)"
-          echo "HOMEPAGE (hex): $(echo -n "$HOMEPAGE" | xxd -p)"
-          echo "============================================"
+          set -e
 
-          # Monta o payload JSON para descrição e homepage
-          PAYLOAD=$(jq -n \
-            --arg desc "$DESCRIPTION" \
-            --arg home "$HOMEPAGE" \
-            '{description: $desc, homepage: $home}')
+          # Verifica se arquivo existe
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "❌ Arquivo $CONFIG_FILE não encontrado"
+            exit 1
+          fi
 
-          echo "Payload sendo enviado:"
-          echo "$PAYLOAD"
-          echo "============================================"
+          # Lê valores do YAML diretamente
+          description=$(yq '.repository.description' "$CONFIG_FILE")
+          homepage=$(yq '.repository.website' "$CONFIG_FILE")
 
-          # Salva o payload em arquivo para garantir encoding correto
-          echo "$PAYLOAD" > /tmp/payload.json
+          echo "📝 Atualizando repositório: ${{ github.repository }}"
+          echo "Descrição: $description"
+          echo "Homepage: $homepage"
 
-          # Faz a requisição PATCH usando arquivo
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH \
+          # Atualiza descrição e homepage
+          curl -f -X PATCH \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            "https://api.github.com/repos/$REPO_NAME" \
-            --data-binary @/tmp/payload.json)
+            "https://api.github.com/repos/${{ github.repository }}" \
+            -d "$(jq -n --arg d "$description" --arg h "$homepage" '{description: $d, homepage: $h}')"
 
-          # Extrai o status code
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "✅ Metadados atualizados com sucesso!"
 
-          echo "Status Code: $HTTP_CODE"
-          echo "Response Body: $BODY"
-
-          if [ "$HTTP_CODE" -eq 200 ]; then
-            echo "✅ Descrição e homepage atualizados com sucesso!"
-          else
-            echo "❌ Erro ao atualizar descrição/homepage."
-            exit 1
-          fi
+          # Atualiza topics
+          topics=$(yq '.repository.topics // []' "$CONFIG_FILE" -o=json)
           
-          # Atualiza os topics se existirem
-          if [ -n "$TOPICS" ]; then
+          if [ "$topics" != "[]" ] && [ "$topics" != "null" ]; then
             echo ""
-            echo "Atualizando topics..."
+            echo "🏷️  Atualizando topics..."
             
-            # Converte a string de topics separada por vírgula em array JSON
-            TOPICS_ARRAY=$(echo "$TOPICS" | jq -R 'split(",") | map(select(length > 0))')
-            
-            TOPICS_PAYLOAD=$(jq -n \
-              --argjson names "$TOPICS_ARRAY" \
-              '{names: $names}')
-            
-            TOPICS_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+            curl -f -X PUT \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/$REPO_NAME/topics" \
-              -d "$TOPICS_PAYLOAD")
+              "https://api.github.com/repos/${{ github.repository }}/topics" \
+              -d "$(jq -n --argjson t "$topics" '{names: $t}')"
             
-            TOPICS_HTTP_CODE=$(echo "$TOPICS_RESPONSE" | tail -n1)
-            TOPICS_BODY=$(echo "$TOPICS_RESPONSE" | sed '$d')
-            
-            if [ "$TOPICS_HTTP_CODE" -eq 200 ]; then
-              echo "✅ Topics atualizados com sucesso!"
-              echo "Topics: $TOPICS"
-            else
-              echo "⚠️  Aviso: Não foi possível atualizar os topics. Status code: $TOPICS_HTTP_CODE"
-              echo "Resposta: $TOPICS_BODY"
-              # Não falha o workflow se apenas os topics falharem
-            fi
+            echo "✅ Topics atualizados com sucesso!"
           fi
