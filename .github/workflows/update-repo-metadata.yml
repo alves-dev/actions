@@ -38,8 +38,8 @@ jobs:
           fi
           
           # Lê os valores do arquivo YAML
-          DESCRIPTION=$(yq eval '.repository.description // ""' ${{ inputs.config-file }})
-          HOMEPAGE=$(yq eval '.repository.website // ""' ${{ inputs.config-file }})
+          DESCRIPTION=$(yq eval '.repository.description // ""' ${{ inputs.config-file }} | tr -d '\n')
+          HOMEPAGE=$(yq eval '.repository.website // ""' ${{ inputs.config-file }} | tr -d '\n')
           TOPICS=$(yq eval '.repository.topics // [] | join(",")' ${{ inputs.config-file }})
           
           echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
@@ -65,6 +65,9 @@ jobs:
             --arg desc "$DESCRIPTION" \
             --arg home "$HOMEPAGE" \
             '{description: $desc, homepage: $home}')
+
+          # ADICIONE ESTA LINHA para debug
+          echo "Payload sendo enviado: $PAYLOAD"
           
           # Faz a requisição PATCH para atualizar descrição e homepage
           RESPONSE=$(curl -s -w "\n%{http_code}" -X PATCH \
